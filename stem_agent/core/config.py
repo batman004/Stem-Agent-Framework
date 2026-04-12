@@ -19,14 +19,14 @@ class StemConfig(BaseSettings):
     Example: STEM_AGENT_MODEL=gpt-4o
     """
 
-    model: str = Field(default="gpt-4o", alias="STEM_AGENT_MODEL")
+    model: str = Field(default="gpt-5.4-mini", alias="STEM_AGENT_MODEL")
     fallback_model: str = Field(
-        default="gpt-4o-mini", alias="STEM_AGENT_FALLBACK_MODEL"
+        default="gpt-5.4-nano", alias="STEM_AGENT_FALLBACK_MODEL"
     )
     temperature: float = 0.2
     max_retries: int = 3
 
-    serpapi_api_key: str = Field(default="", alias="SERPAPI_API_KEY")
+    serper_api_key: str = Field(default="", alias="SERPER_API_KEY")
 
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
 
@@ -50,3 +50,9 @@ class StemConfig(BaseSettings):
 
 
 config = StemConfig()
+
+
+def get_openai_client():
+    """Create an OpenAI client using the API key from config."""
+    from openai import OpenAI
+    return OpenAI(api_key=config.openai_api_key or None)
