@@ -46,6 +46,7 @@ class SubProblemState(BaseModel):
     quality_rubric: str = ""
 
     tools_acquired: list[str] = []
+    custom_tools: dict[str, str] = {}
     prompt_templates: dict[str, str] = {}
     agent_pattern: str = "react"
 
@@ -58,6 +59,37 @@ class SubProblemState(BaseModel):
     @property
     def is_branched(self) -> bool:
         return self.specialist_id is not None
+
+    def export_specialist_artifact(self, output_dir: str) -> str:
+        """Serialize the matured sub-problem state into a LangChain Agent JSON file."""
+        import json
+        from pathlib import Path
+        
+        out_path = Path(output_dir)
+        out_path.mkdir(parents=True, exist_ok=True)
+        
+        filename = f"specialist_{self.name}_{self.specialist_id[:8] if self.specialist_id else 'dev'}.json"
+        filepath = out_path / filename
+        
+        # Format as a LangChain Agent configurable JSON
+        agent_config = {
+            "name": self.name,
+            "description": self.description,
+            "agent_type": "zero-shot-react-description",
+            "prompt_templates": self.prompt_templates,
+            "tools": self.tools_acquired,
+            "custom_tool_code": self.custom_tools,
+            "metadata": {
+                "competence_score": self.competence_score,
+                "iterations_trained": self.iterations,
+                "rubric": self.quality_rubric
+            }
+        }
+        
+        with open(filepath, "w") as f:
+            json.dump(agent_config, f, indent=4)
+            
+        return str(filepath)
 
 
 class StemAgentState(BaseModel):

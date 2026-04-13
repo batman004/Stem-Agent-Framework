@@ -2,7 +2,7 @@
 name = "stem-agent"
 version = "0.1.0"
 description = "A self-specializing AI agent framework inspired by biological stem cells"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = [
     "langgraph>=1.1.0",
     "langchain-core>=1.2.0",
@@ -16,6 +16,8 @@ dependencies = [
     "loguru>=0.7.0",
     "python-dotenv>=1.0.0",
     "rich>=13.0.0",
+    "chromadb>=0.4.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -27,6 +29,9 @@ dev = [
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["stem_agent"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

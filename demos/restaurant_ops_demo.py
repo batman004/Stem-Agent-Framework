@@ -48,7 +48,7 @@ print(f"Food Cost: ${food_cost}")
 print(f"Revenue: ${revenue}")
 print(f"Food Cost %: {food_cost_pct:.1f}%")
 print(f"Target: 28-32%")
-print(f"Status: {'✅ On target' if 28 <= food_cost_pct <= 32 else '⚠️ Needs attention'}")
+print(f"Status: {'On target' if 28 <= food_cost_pct <= 32 else 'Needs attention'}")
 """
 result = python_repl.invoke(code)
 console.print(Panel(result, title="🧮 REPL Output", border_style="green"))
@@ -85,24 +85,24 @@ tool = composer.compose(
 )
 
 if tool:
-    console.print(f"  ✅ Composed tool: [green]{tool.name}[/green]")
+    console.print(f"  Composed tool: [green]{tool.name}[/green]")
     test_result = tool.invoke("3500, 12000")
-    console.print(f"  📊 Test run (3500, 12000): {test_result}")
+    console.print(f"  Test run (3500, 12000): {test_result}")
 
     validator = ToolValidator(num_tests=2)
     valid = validator.validate(tool)
-    console.print(f"  {'✅ Validated' if valid else '❌ Failed validation'}")
+    console.print(f"  {'Validated' if valid else 'Failed validation'}")
 
     if valid:
         registry.register(tool, capabilities=["compute", "food_cost", "restaurant"])
         console.print(f"  📦 Registered in tool registry ({registry.size} total tools)")
 else:
-    console.print("  ❌ Composition failed")
+    console.print("  Composition failed")
 
 
 # ── 5. Graph — stub run with restaurant_ops ──
 console.print("\n[bold cyan]5. Graph — running with task_class='restaurant_ops'[/bold cyan]")
-console.print("  [dim]⚠️ Still using stub nodes — real LLM logic comes in TP3[/dim]\n")
+console.print("  [dim]Still using stub nodes — real LLM logic comes in TP3[/dim]\n")
 from stem_agent.core.graph import build_graph
 from stem_agent.core.state import StemAgentState, GraphState
 
@@ -127,12 +127,12 @@ for name, sid in agent.specialists.items():
 
 # ── Summary ──
 console.print(Panel(
-    "[green]✅ Working NOW:[/green] web search, python repl, read_url, write_file,\n"
+    "[green]Working NOW:[/green] web search, python repl, read_url, write_file,\n"
     "   tool registry, tool composer, tool validator, graph structure\n\n"
     "[yellow]⬜ Coming in TP3:[/yellow] LLM-powered environment_probe that will:\n"
     "   • Search 'restaurant operations' via web_search\n"
     "   • Use GPT-4o to discover REAL sub-problems (inventory, scheduling, etc.)\n"
     "   • Replace the dummy sub_problem_1/sub_problem_2 with actual domain analysis",
-    title="📊 Status",
+    title="Status",
     border_style="bright_cyan",
 ))

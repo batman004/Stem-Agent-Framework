@@ -1,5 +1,5 @@
 """
-🧬 Stem Agent Framework
+Stem Agent Framework
 
 A self-specializing AI agent that reads environmental signals,
 differentiates into domain-specific specialists, and verifies

@@ -66,7 +66,7 @@ class ToolValidator:
         success = passed == len(test_cases)
         logger.info(
             f"Validation for '{tool.name}': {passed}/{len(test_cases)} passed — "
-            f"{'✅ APPROVED' if success else '❌ REJECTED'}"
+            f"{'APPROVED' if success else 'REJECTED'}"
         )
         return success
 

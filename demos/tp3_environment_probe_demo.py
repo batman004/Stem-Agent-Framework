@@ -81,7 +81,7 @@ def probe_domain(task_class: str, description: str) -> dict:
     for q in search_queries:
         result = web_search.invoke(q)
         all_results.append(f"--- Query: {q} ---\n{result}")
-        console.print(f"  ✅ Searched: [dim]{q}[/dim]")
+        console.print(f"  Searched: [dim]{q}[/dim]")
 
     combined_results = "\n\n".join(all_results)
     console.print(f"  📄 Collected {len(combined_results)} chars of search data\n")
@@ -114,7 +114,7 @@ def probe_domain(task_class: str, description: str) -> dict:
             raw = raw[start:end]
 
     domain_model = json.loads(raw)
-    console.print(f"  ✅ Discovered {len(domain_model.get('sub_problems', []))} sub-problems\n")
+    console.print(f"  Discovered {len(domain_model.get('sub_problems', []))} sub-problems\n")
 
     return domain_model
 
@@ -124,7 +124,7 @@ def main():
     description = "Operational management for restaurants including inventory, scheduling, menu optimization, and cost control."
 
     console.print(Panel(
-        f"🔬 [bold]TP3 Environment Probe Demo[/bold]\n"
+        f"[bold]TP3 Environment Probe Demo[/bold]\n"
         f"Domain: [cyan]{task_class}[/cyan]\n"
         f"{description}",
         border_style="bright_cyan",
@@ -138,7 +138,7 @@ def main():
     formatted = json.dumps(domain_model, indent=2)
     console.print(Syntax(formatted, "json", theme="monokai", line_numbers=True))
 
-    console.print(f"\n[bold green]✅ Environment probe complete![/bold green]")
+    console.print(f"\n[bold green]Environment probe complete![/bold green]")
     console.print(f"  Sub-problems: {len(domain_model.get('sub_problems', []))}")
     for sp in domain_model.get("sub_problems", []):
         caps = ", ".join(sp.get("required_tool_capabilities", []))

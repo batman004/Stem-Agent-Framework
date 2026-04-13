@@ -48,7 +48,10 @@ class ToolComposer:
         primitive_names: list[str] | None = None,
     ) -> StructuredTool | None:
         """Use LLM to generate a Python function for the capability, wrap as tool."""
-        func_name = capability.lower().replace(" ", "_").replace("-", "_")
+        import re
+        func_name = re.sub(r'[^a-zA-Z0-9_]', '_', capability.lower())
+        if func_name and func_name[0].isdigit():
+            func_name = "tool_" + func_name
         desc = description or f"A tool that performs: {capability}"
         primitives = ", ".join(primitive_names or ["python_repl", "web_search"])
 
@@ -69,6 +72,10 @@ class ToolComposer:
                 max_completion_tokens=1000,
             )
 
+            if hasattr(response, "usage") and response.usage:
+                u = response.usage
+                logger.info(f"composer tokens: {u.prompt_tokens} prompt / {u.completion_tokens} completion")
+
             code = response.choices[0].message.content.strip()
             code = self._clean_code(code)
 
@@ -85,6 +92,8 @@ class ToolComposer:
                 name=func_name,
                 description=desc,
             )
+            # Attach the raw code to the tool so it can be serialized by the state exporter
+            tool.metadata = {"source_code": code}
 
             logger.info(f"Composed tool '{func_name}' successfully")
             return tool
@@ -95,8 +104,9 @@ class ToolComposer:
 
     def _clean_code(self, code: str) -> str:
         """Strip markdown fences and leading/trailing whitespace from LLM output."""
-        if code.startswith("```"):
-            lines = code.split("\n")
-            lines = [l for l in lines if not l.strip().startswith("```")]
-            code = "\n".join(lines)
-        return code.strip()
+        import re
+        code = code.strip()
+        match = re.search(r'```(?:python)?(.*?)```', code, flags=re.DOTALL | re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+        return code
