@@ -1,0 +1,26 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Code Review — Domain Configuration
+#
+# Stem agent will produce specialists for: PR analysis, code quality checking,
+# security scanning, dependency auditing, and documentation review.
+#
+# Resources: provide a GitHub repo or PR link. The agent inspects the file
+# tree, README, and diff autonomously — no API key required for public repos.
+# ─────────────────────────────────────────────────────────────────────────────
+
+task_class: "code_review"
+description: >
+  Automated code review and quality analysis including PR diff analysis,
+  code quality checks, security vulnerability detection, dependency auditing,
+  and technical documentation review.
+
+resources:
+  # Using a well-known public Python repository for local testing
+  - type: github_repo
+    url: "https://github.com/pallets/flask"
+    label: "Flask web framework (public repo for testing)"
+
+  # Example: point at a real PR in your own repo
+  # - type: github_pr
+  #   url: "https://github.com/your-org/your-repo/pull/123"
+  #   label: "Feature branch PR"

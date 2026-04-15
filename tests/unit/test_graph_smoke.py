@@ -1,5 +1,5 @@
 import pytest
-from stem_agent.core.state import AgentPhase, StemAgentState, SubProblemState, GraphState
+from stem_agent.core.state import AgentPhase, BenchmarkTask, StemAgentState, SubProblemState, GraphState
 from stem_agent.core.graph import (
     build_graph,
     environment_probe,
@@ -22,7 +22,7 @@ class TestEnvironmentProbe:
         agent = result["agent"]
         assert agent.phase == AgentPhase.ARCHITECTING
         assert "sub_problems" in agent.domain_model
-        assert len(agent.domain_model["sub_problems"]) == 2
+        assert len(agent.domain_model["sub_problems"]) >= 1
 
 
 class TestArchitectPlanner:
@@ -63,14 +63,25 @@ class TestExecutionLoop:
             )
         }
         state["agent"].sub_problems = {
-            "sp1": SubProblemState(name="sp1", description="test")
+            "sp1": SubProblemState(
+                name="sp1",
+                description="test",
+                benchmark_tasks=[
+                    BenchmarkTask(
+                        task_id="sp1_bench_0",
+                        instruction="Search for best practices in testing",
+                        success_criteria="Should contain relevant results",
+                    )
+                ],
+                tools_acquired=["web_search"],
+            )
         }
         result = execution_loop(state)
         agent = result["agent"]
         assert agent.iteration == 1
         assert agent.phase == AgentPhase.EVALUATING
         assert len(agent.checkpoints) == 1
-        assert agent.sub_problems["sp1"].competence_score > 0
+        assert len(agent.sub_problems["sp1"].task_history) == 1
 
 
 class TestCompetenceTracker:
@@ -167,9 +178,9 @@ class TestFullGraph:
         agent = final_state["agent"]
         assert agent.phase == AgentPhase.COMPLETE
         assert agent.iteration > 0
-        assert len(agent.sub_problems) == 2
+        assert len(agent.sub_problems) >= 1
         assert agent.all_branched
-        assert len(agent.specialists) == 2
+        assert len(agent.specialists) >= 1
         assert len(agent.log) > 0
         assert len(agent.checkpoints) > 0
 

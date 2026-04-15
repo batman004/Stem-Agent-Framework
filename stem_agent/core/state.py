@@ -25,16 +25,41 @@ class AgentPhase(str, Enum):
     COMPLETE     = "complete"
 
 
+class UserResource(BaseModel):
+    """A user-provided resource for the stem agent to inspect autonomously.
+
+    The user provides connection info (URL, credentials), NOT full schemas.
+    The stem agent discovers the structure itself via inspection tools.
+    """
+    type: str = ""              # database, github_repo, github_pr, api, url, file_path
+    url: str = ""
+    label: str = ""
+    credentials: dict[str, str] = {}   # Optional auth (tokens, passwords)
+    discovered_schema: str = ""        # Populated by environment_probe inspection
+
+
 class TaskRecord(BaseModel):
     """Record of a single task execution."""
     task_id: str = ""
     task: dict[str, Any] = {}
     output: str = ""
     score: float = 0.0
+    eval_reasoning: str = ""
+    tools_used: list[str] = []
     timestamp: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     iteration: int = 0
+
+
+class BenchmarkTask(BaseModel):
+    """A concrete, executable benchmark task for evaluating agent competence."""
+    task_id: str = ""
+    instruction: str = ""
+    expected_approach: str = ""
+    difficulty: str = "medium"  # easy, medium, hard
+    requires_tools: list[str] = []
+    success_criteria: str = ""
 
 
 class SubProblemState(BaseModel):
@@ -50,8 +75,10 @@ class SubProblemState(BaseModel):
     prompt_templates: dict[str, str] = {}
     agent_pattern: str = "react"
 
+    benchmark_tasks: list[BenchmarkTask] = []
     competence_score: float = 0.0
     task_history: list[TaskRecord] = []
+    eval_feedback: list[str] = []  # Accumulated feedback from competence tracker
     iterations: int = 0
 
     specialist_id: str | None = None
@@ -113,6 +140,13 @@ class StemAgentState(BaseModel):
     max_checkpoints: int = 5
 
     specialists: dict[str, str] = {}
+
+    # Before/after evaluation
+    baseline_scores: dict[str, float] = {}  # sub_problem_name → baseline score
+
+    user_resources: list[UserResource] = []       # User-provided DB URLs, repo links, etc.
+    resource_context: str = ""                    # Discovered schemas/structures, fed to LLM
+    pending_clarifications: list[str] = []        # Questions to surface to the user
 
     errors: list[str] = []
     warnings: list[str] = []

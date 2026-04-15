@@ -1,2 +1,34 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Restaurant Operations — Domain Configuration
+#
+# The stem agent reads this file to understand the problem domain and discover
+# what specialist agents to create. Resources are inspected autonomously — you
+# only need to provide the connection URL, not the full schema.
+# ─────────────────────────────────────────────────────────────────────────────
+
 task_class: "restaurant_ops"
-description: "Operational management for restaurants including inventory, scheduling, menu optimization, and cost control."
+description: >
+  Operational management for restaurants including inventory tracking,
+  staff scheduling, menu optimisation, cost control, and supplier
+  relationship management.
+
+# Optional: Point the stem agent at real user resources.
+# The agent will inspect these autonomously (schema, structure, etc.)
+# and produce specialists grounded in your actual data — not just generic
+# web knowledge.
+#
+# To generate the local test database, run:
+#   python -m scripts.seed_restaurant_db
+resources:
+  - type: database
+    url: "sqlite:///data/restaurant.db"
+    label: "Restaurant operations database (SQLite)"
+
+  # Uncomment to also analyse a GitHub repo or PR:
+  # - type: github_repo
+  #   url: "https://github.com/your-org/your-pos-system"
+  #   label: "POS system codebase"
+  #
+  # - type: github_pr
+  #   url: "https://github.com/your-org/your-pos-system/pull/42"
+  #   label: "Feature PR to review"

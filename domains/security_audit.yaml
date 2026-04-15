@@ -1,0 +1,2 @@
+task_class: "security_audit"
+description: "Automated security auditing for web applications including vulnerability scanning, configuration review, compliance checking, and threat modeling."

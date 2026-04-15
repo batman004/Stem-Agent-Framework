@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TEMPLATE — New Domain Configuration
+#
+# Copy this file, rename it to your domain (e.g. ecommerce_ops.yaml),
+# and fill in the fields below. Then run the stem agent:
+#
+#   python -m demos.graph_e2e_demo
+#
+# The agent will autonomously:
+#   1. Inspect your resources (DB schema, repo structure, etc.)
+#   2. Search the web for domain best practices
+#   3. Identify 3-5 sub-problems within your domain
+#   4. Compose and validate the tools each sub-problem needs
+#   5. Train specialist agents and export them to specialists/
+#   6. Make them available via the orchestrator CLI
+# ─────────────────────────────────────────────────────────────────────────────
+
+# REQUIRED — short snake_case identifier for this domain
+task_class: "your_domain_name"
+
+# REQUIRED — plain-English description
+description: >
+  Describe what this domain involves and what kind of problems
+  an AI agent operating in it would need to solve.
+
+# OPTIONAL — real resources for the agent to inspect.
+# The agent reads structure/schema only, never raw data.
+# Remove or leave empty to rely on web search alone.
+resources: []
+
+# ── Resource examples ──────────────────────────────────────────────────────
+#
+# A PostgreSQL database (full SQLAlchemy URL format):
+#   resources:
+#     - type: database
+#       url: "postgresql://user:password@localhost:5432/mydb"
+#       label: "Main production database"
+#
+# A SQLite database (relative path from project root):
+#   resources:
+#     - type: database
+#       url: "sqlite:///data/mydata.db"
+#       label: "Local SQLite database"
+#
+# A MySQL database:
+#   resources:
+#     - type: database
+#       url: "mysql+pymysql://user:password@localhost/mydb"
+#       label: "MySQL Operations DB"
+#
+# A public GitHub repository:
+#   resources:
+#     - type: github_repo
+#       url: "https://github.com/org/repo"
+#       label: "Main codebase"
+#
+# A GitHub pull request:
+#   resources:
+#     - type: github_pr
+#       url: "https://github.com/org/repo/pull/42"
+#       label: "Feature PR for review"
+#
+# A URL (any webpage — API docs, wiki, etc.):
+#   resources:
+#     - type: url
+#       url: "https://docs.yourplatform.com/api"
+#       label: "API documentation"
+#
+# Multiple resources (agent inspects all of them):
+#   resources:
+#     - type: database
+#       url: "sqlite:///data/mydb.db"
+#       label: "Operations database"
+#     - type: github_repo
+#       url: "https://github.com/org/repo"
+#       label: "Service codebase"
+# ───────────────────────────────────────────────────────────────────────────
