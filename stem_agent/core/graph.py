@@ -525,7 +525,9 @@ def branching_mechanism(state: GraphState) -> GraphState:
             sp.specialist_id = specialist_id
             
             try:
-                out_path = sp.export_specialist_artifact("specialists")
+                # NEW: Grounding resources for runtime tool usage (sql_query, etc)
+                grounding = [res.model_dump() for res in agent.user_resources]
+                out_path = sp.export_specialist_artifact("specialists", grounding_resources=grounding)
                 agent.add_log(f"Persistent agent artifact saved to: {out_path}")
             except Exception as e:
                 agent.add_log(f"Failed to save agent artifact {name}: {e}")

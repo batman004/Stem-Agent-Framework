@@ -92,7 +92,29 @@ class SpecialistRouter:
             else:
                 logger.warning(f"Could not resolve tool: {t_name}")
 
+        # Add sql_query if it's in acquired tools OR if it's a primitive
+        # We bind it to the grounded database url if available in metadata
+        grounding = data.get("metadata", {}).get("grounding_resources", [])
+        db_url = next((r["url"] for r in grounding if r["type"] == "database"), None)
+        
+        if db_url:
+            from stem_agent.tools.primitives import sql_query
+            
+            def bound_sql_query(query: str) -> str:
+                """Execute a read-only SQL query against the specialists' grounded database."""
+                return sql_query.invoke({"query": query, "connection_url": db_url})
+                
+            bound_tool = StructuredTool.from_function(
+                func=bound_sql_query,
+                name="sql_query",
+                description="Query the live database for this specialist to get real-time info."
+            )
+            active_tools.append(bound_tool)
+            logger.info(f"Bound sql_query to {data['name']} using {db_url}")
+
         system_prompt = data.get("prompt_templates", {}).get("system", "You are a helpful assistant.")
+        if db_url:
+            system_prompt += f"\n\nLIVE GROUNDING: You are connected to a database at {db_url}. Use 'sql_query' to fetch live data."
         
         from langgraph.prebuilt import create_react_agent
         from langchain_openai import ChatOpenAI

@@ -80,8 +80,10 @@ def run_differentiation(yaml_path: Path) -> bool:
     from stem_agent.core.graph import differentiate_from_yaml
 
     console.print(f"\n[bold cyan]Differentiating from {yaml_path}...[/bold cyan]")
-    console.print("[dim]This will probe the domain, inspect resources, architect sub-problems,")
-    console.print("run benchmark tasks, evaluate competence, and branch specialists.[/dim]\n")
+    console.print(
+        "[dim]This will probe the domain, inspect resources, architect sub-problems, "
+        "run benchmark tasks, evaluate competence, and branch specialists.[/dim]\n"
+    )
 
     try:
         agent = differentiate_from_yaml(yaml_path, max_iterations=3)
@@ -106,7 +108,8 @@ def run_differentiation(yaml_path: Path) -> bool:
         return bool(agent.specialists)
 
     except Exception as e:
-        console.print(f"[bold red]Differentiation failed:[/bold red] {e}")
+        from rich.markup import escape
+        console.print(f"[bold red]Differentiation failed:[/bold red] {escape(str(e))}")
         return False
 
 
@@ -299,7 +302,8 @@ def main():
             console.print("\n[dim]Shutting down.[/dim]")
             break
         except Exception as e:
-            console.print(f"[bold red]Error:[/bold red] {e}")
+            from rich.markup import escape
+            console.print(f"[bold red]Error:[/bold red] {escape(str(e))}")
 
 
 if __name__ == "__main__":

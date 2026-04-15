@@ -87,7 +87,7 @@ class SubProblemState(BaseModel):
     def is_branched(self) -> bool:
         return self.specialist_id is not None
 
-    def export_specialist_artifact(self, output_dir: str) -> str:
+    def export_specialist_artifact(self, output_dir: str, grounding_resources: list[dict[str, Any]] | None = None) -> str:
         """Serialize the matured sub-problem state into a LangChain Agent JSON file."""
         import json
         from pathlib import Path
@@ -109,7 +109,8 @@ class SubProblemState(BaseModel):
             "metadata": {
                 "competence_score": self.competence_score,
                 "iterations_trained": self.iterations,
-                "rubric": self.quality_rubric
+                "rubric": self.quality_rubric,
+                "grounding_resources": grounding_resources or []
             }
         }
         

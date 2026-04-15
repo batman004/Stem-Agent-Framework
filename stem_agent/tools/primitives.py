@@ -189,6 +189,56 @@ def db_inspect(connection_url: str) -> str:
 
 
 @tool
+def sql_query(query: str, connection_url: str) -> str:
+    """Execute a read-only SQL query against a database and return results.
+
+    ONLY SELECT statements are allowed. Connection URL is provided by the system context.
+    Results are returned as a list of dictionaries (JSON).
+    """
+    try:
+        from sqlalchemy import create_engine, text
+        import json
+
+        # Basic read-only safety check
+        forbidden_keywords = [
+            "INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", 
+            "TRUNCATE", "GRANT", "REVOKE", "ATTACH", "DETACH"
+        ]
+        query_upper = query.upper().strip()
+        
+        if not query_upper.startswith("SELECT") and not query_upper.startswith("WITH"):
+             return "Error: Only SELECT queries are allowed for safety."
+        
+        for keyword in forbidden_keywords:
+            # Match keywords with word boundaries to avoid false positives in column names
+            import re
+            if re.search(rf"\b{keyword}\b", query_upper):
+                return f"Error: Forbidden keyword '{keyword}' detected in query."
+
+        # Add LIMIT if not present to prevent context blowup
+        if "LIMIT" not in query_upper:
+            query = f"{query.rstrip(';')} LIMIT 50"
+
+        engine = create_engine(connection_url, echo=False)
+        with engine.connect() as conn:
+            result = conn.execute(text(query))
+            rows = [dict(row._mapping) for row in result]
+
+        engine.dispose()
+        
+        if not rows:
+            return "Query returned no results."
+            
+        output = json.dumps(rows, indent=2, default=str)
+        logger.info(f"sql_query: query returned {len(rows)} rows")
+        return output
+
+    except Exception as e:
+        logger.error(f"sql_query failed: {e}")
+        return f"SQL query error: {e}"
+
+
+@tool
 def repo_inspect(github_url: str) -> str:
     """Inspect a GitHub repository or pull request and return its structure.
 
@@ -304,7 +354,7 @@ def _inspect_pr(owner: str, repo: str, pr_num: str) -> str:
     return output
 
 
-PRIMITIVE_TOOLS = [web_search, python_repl, read_url, write_file, db_inspect, repo_inspect]
+PRIMITIVE_TOOLS = [web_search, python_repl, read_url, write_file, db_inspect, sql_query, repo_inspect]
 
 PRIMITIVE_CAPABILITIES = {
     "web_search": ["search", "research", "lookup", "find", "query"],
@@ -312,5 +362,6 @@ PRIMITIVE_CAPABILITIES = {
     "read_url": ["fetch", "scrape", "read", "download", "extract"],
     "write_file": ["write", "save", "export", "output", "store"],
     "db_inspect": ["database", "schema", "sql", "inspect", "tables", "columns"],
+    "sql_query": ["query", "select", "data", "fetch", "database", "sql"],
     "repo_inspect": ["github", "repository", "pull_request", "code_review", "diff", "repo"],
 }
