@@ -42,7 +42,16 @@ YAML Domain Config
 ### 1. Install
 
 ```bash
-pip install -e .
+# Recommended: keep packaging tooling current
+python -m pip install -U pip setuptools wheel
+
+# Editable install (for development)
+python -m pip install -e .
+
+# If you're using conda and hit:
+#   AssertionError: .../lib/python3.11/distutils/core.py
+# then install with:
+SETUPTOOLS_USE_DISTUTILS=stdlib python -m pip install -e .
 ```
 
 ### 2. Configure
