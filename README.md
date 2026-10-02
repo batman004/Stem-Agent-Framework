@@ -190,3 +190,90 @@ Scans `specialists/` for JSON artifacts and creates lazy-loaded proxy tools. A s
 | `restaurant_ops` | SQLite DB (10 tables) | Menu costing, inventory planning, staff scheduling, supplier management, sales monitoring |
 | `code_review` | GitHub repo (Flask) | Security detection, PR diff analysis, code quality, CI/dependency audit, docs review |
 | `security_audit` | None (web-only) | Varies based on web research |
+
+## Creating Custom Specialists with Claude Code
+
+The framework is also useful for creating specialized Claude Code agents grounded in a specific project. Use the `stem-agent` skill to create experts for your codebase.
+
+### Example: Testing Guide Agent
+
+A specialist that helps developers understand and write tests for the Stem Agent Framework itself.
+
+```bash
+/stem-agent
+# → Probes the codebase: finds pytest setup, test organization (class-based), Pydantic v2 patterns
+# → Researches: pytest best practices (but skips since testing is internal)
+# → Architects: single read-only advisor with Read, Grep, Bash tools
+# → Generates: .claude/agents/testing-guide.md with grounded examples from test_state.py
+```
+
+**Invoke**: `@agent-testing-guide` or ask "How do I test a Pydantic model in this codebase?"
+
+**Output**: Concrete guidance with file paths, line numbers, and patterns from actual tests.
+
+```markdown
+### Pattern & Example
+**File**: `tests/unit/test_state.py`
+
+The pattern follows three layers: validation → behavior → serialization.
+
+class TestSubProblemState:
+    def test_serialization_roundtrip(self):
+        sp = SubProblemState(name="test", description="test", competence_score=0.5)
+        data = sp.model_dump()  # Use model_dump(), not dict()
+        restored = SubProblemState(**data)
+        assert restored.competence_score == sp.competence_score
+```
+
+### Example: Performance Optimizer Agent
+
+A specialist that profiles the framework for bottlenecks (execution speed, memory, token efficiency, API latency) and implements optimizations.
+
+```bash
+/stem-agent
+# → Probes: finds LLM call sites, ChromaDB caching, API timeouts, state management
+# → Researches: token efficiency, memory profiling, async optimization, caching strategies
+# → Architects: single implementer (can edit code) with Edit, Write, Bash tools
+# → Generates: .claude/agents/performance-optimizer.md with concrete metrics and thresholds
+```
+
+**Invoke**: `@agent-performance-optimizer` or ask "Profile the environment_probe phase"
+
+**Output**: Before/after metrics with code changes and measurement proof.
+
+```markdown
+### Before/After Benchmark
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| environment_probe latency | 12.5s | 9.5s | 24% (3s saved) |
+| Web search phase | 6.0s | 3.0s | 50% |
+
+### Changes Made
+- File: stem_agent/core/graph.py:92-224: Implemented parallel web search using ThreadPoolExecutor
+- Reduced LLM token limit from 2000 → 1000 (50% token savings)
+- Added per-step timing instrumentation for future profiling
+```
+
+### Why Specialists Work
+
+Compared to a generic "you are a testing expert" agent:
+
+1. **Grounded in reality** — knows actual paths (`tests/unit/test_state.py`), exact commands (`pytest tests/unit/`), real conventions (class-based organization)
+2. **Focused capabilities** — testing-guide has Read/Grep/Bash (no code generation); performance-optimizer has Edit/Write/Bash (implementer)
+3. **Verified facts** — every statement was checked against the codebase during probing phase
+4. **Quality bar** — knows what good looks like (output contract, before/after metrics, confidence levels)
+5. **Self-aware scope** — knows what it doesn't handle (algorithm changes, architecture redesign) and hands back to parent
+
+### Creating Your Own Specialists
+
+Use the stem-agent skill workflow:
+
+1. **Intake** — Describe the problem area (e.g., "security code review", "database migration planning")
+2. **Probe** — Framework inspects your codebase and infrastructure
+3. **Research** — Background research on domain best practices
+4. **Architect** — Design single or small team of agents with right-sized capabilities
+5. **Synthesize** — Write agent markdown files grounded in your environment
+6. **Validate & Trial** — Test with benchmark tasks, measure quality
+7. **Deliver** — Agent ready for delegation via description or named routing
+
+See `.claude/skills/stem-agent/` for the full skill documentation and reference templates.

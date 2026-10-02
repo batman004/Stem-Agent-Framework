@@ -1,4 +1,6 @@
+import json
 import pytest
+from unittest.mock import patch, MagicMock
 from stem_agent.core.state import AgentPhase, BenchmarkTask, StemAgentState, SubProblemState, GraphState
 from stem_agent.core.graph import (
     build_graph,
@@ -12,9 +14,40 @@ from stem_agent.core.graph import (
     route_after_branching,
 )
 
+MOCK_DOMAIN_JSON = {
+    "sub_problems": [
+        {
+            "name": "test_sub_problem",
+            "description": "Test sub-problem",
+            "expert_workflow": ["step1", "step2"],
+            "required_tool_capabilities": ["search"],
+            "quality_rubric": "Must be good.",
+        }
+    ],
+    "overall_eval_criteria": "Done.",
+}
+
 
 class TestEnvironmentProbe:
-    def test_produces_domain_model(self):
+    @patch("stem_agent.core.graph.SkillStore")
+    @patch("stem_agent.core.graph.get_openai_client")
+    @patch("stem_agent.core.graph.web_search")
+    def test_produces_domain_model(self, mock_search, mock_get_client, mock_store_cls):
+        # Setup mocks
+        mock_store = MagicMock()
+        mock_store.get_domain.return_value = None
+        mock_store_cls.return_value = mock_store
+
+        mock_search.invoke.return_value = "Mock search results"
+
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = json.dumps(MOCK_DOMAIN_JSON)
+        mock_response.usage = None
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_get_client.return_value = mock_client
+
         state: GraphState = {
             "agent": StemAgentState(task_class="test", task_class_description="test domain")
         }

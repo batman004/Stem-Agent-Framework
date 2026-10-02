@@ -11,8 +11,10 @@ from __future__ import annotations
 import sys
 import json
 import yaml
+import time
 from pathlib import Path
 from typing import Literal
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from loguru import logger
 from langgraph.graph import StateGraph, END
@@ -86,7 +88,12 @@ def environment_probe(state: GraphState) -> GraphState:
     agent: StemAgentState = state["agent"]
     agent.add_log(f"environment_probe: Probing domain for '{agent.task_class}'...")
 
+    # Timing instrumentation
+    phase_start = time.perf_counter()
+    timings = {}
+
     # ── Step 0: Inspect user-provided resources ────────────────────────────────
+    step0_start = time.perf_counter()
     if agent.user_resources:
         agent.add_log(f"environment_probe: Inspecting {len(agent.user_resources)} user-provided resource(s)...")
         resource_sections = []
@@ -130,30 +137,45 @@ def environment_probe(state: GraphState) -> GraphState:
     else:
         agent.resource_context = "No user-provided resources."
 
+    timings["step0_resource_inspection"] = time.perf_counter() - step0_start
+
     # ── Step 1: Check cache ────────────────────────────────────────────────────
+    step1_start = time.perf_counter()
     store = SkillStore()
     cached = store.get_domain(agent.task_class)
+    timings["step1_cache_lookup"] = time.perf_counter() - step1_start
 
     if cached and not agent.user_resources:
         # Only use cache when no live resources provided (live resources may change)
         agent.add_log("environment_probe: Retrieved domain model from SkillStore cache.")
         agent.domain_model = cached
     else:
-        # ── Step 2: Web Search for context ────────────────────────────────────
-        agent.add_log("environment_probe: Searching the web for domain knowledge...")
+        # ── Step 2: Web Search for context (PARALLEL) ─────────────────────────
+        step2_start = time.perf_counter()
+        agent.add_log("environment_probe: Searching the web for domain knowledge (parallel)...")
         queries = [
             f"{agent.task_class.replace('_', ' ')} key challenges and best practices",
             f"{agent.task_class.replace('_', ' ')} workflow automation opportunities"
         ]
 
+        # Execute web searches in parallel using ThreadPoolExecutor
         all_results = []
-        for q in queries:
-            res = web_search.invoke(q)
-            all_results.append(f"--- Query: {q} ---\n{res}")
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_to_query = {executor.submit(web_search.invoke, q): q for q in queries}
+            for future in as_completed(future_to_query):
+                q = future_to_query[future]
+                try:
+                    res = future.result()
+                    all_results.append(f"--- Query: {q} ---\n{res}")
+                except Exception as e:
+                    logger.warning(f"environment_probe: web_search failed for '{q}': {e}")
+                    all_results.append(f"--- Query: {q} ---\nSearch failed: {e}")
 
         combined_results = "\n\n".join(all_results)[:6000]
+        timings["step2_web_search"] = time.perf_counter() - step2_start
 
         # ── Step 3: LLM domain analysis (resource-aware) ──────────────────────
+        step3_start = time.perf_counter()
         agent.add_log("environment_probe: Analyzing with LLM (resource-aware)...")
         client = get_openai_client()
         prompt = DOMAIN_ANALYSIS_PROMPT.format(
@@ -170,7 +192,7 @@ def environment_probe(state: GraphState) -> GraphState:
                     {"role": "system", "content": "You are a domain analysis expert. Return only valid JSON."},
                     {"role": "user", "content": prompt},
                 ],
-                max_completion_tokens=2000,
+                max_completion_tokens=1000,
             )
 
             if hasattr(response, "usage") and response.usage:
@@ -195,6 +217,8 @@ def environment_probe(state: GraphState) -> GraphState:
             agent.phase = AgentPhase.COMPLETE
             return {"agent": agent}
 
+        timings["step3_llm_analysis"] = time.perf_counter() - step3_start
+
     # Surface any clarifications
     if agent.pending_clarifications:
         agent.add_log(f"environment_probe: {len(agent.pending_clarifications)} clarification(s) needed — see pending_clarifications.")
@@ -202,6 +226,12 @@ def environment_probe(state: GraphState) -> GraphState:
     num_subs = len(agent.domain_model.get("sub_problems", []))
     agent.phase = AgentPhase.ARCHITECTING
     agent.add_log(f"environment_probe: Done. Found {num_subs} sub-problems.")
+
+    # Log timing summary
+    total_time = time.perf_counter() - phase_start
+    timing_summary = " | ".join([f"{k}={v:.3f}s" for k, v in sorted(timings.items())])
+    logger.info(f"environment_probe timing: {timing_summary} | TOTAL={total_time:.3f}s")
+
     logger.info("environment_probe complete → ARCHITECTING")
     return {"agent": agent}
 
